@@ -1,15 +1,1 @@
-dependencyResolutionManagement {
-    repositories {
-        mavenCentral()
-        maven {
-            name = "betradar-java"
-            url "https://archiva.sportradar.ag/repository/internal"
-            credentials {
-                username = archivaUsername
-                password = archivaPassword
-            }
-        }
-    }
-}
-
 rootProject.name = "ingress"
