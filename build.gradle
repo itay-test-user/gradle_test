@@ -1,0 +1,83 @@
+plugins {
+    id 'java'
+    id 'org.springframework.boot' version "${springBootVersion}"
+    id 'io.spring.dependency-management' version "${springDependencyManagementVersion}"
+    id 'com.tngtech.jgiven.gradle-plugin' version "${jgivenVersion}"
+    id 'pl.allegro.tech.build.axion-release' version "${axionReleasePluginVersion}"
+    id 'idea'
+    id "jacoco"
+    id 'org.sonarqube' version "${sonarqubeVersion}"
+    id 'com.adarshr.test-logger' version "${testLoggerVersion}"
+}
+
+group = 'com.sportradar.livedata.igp'
+project.version = scmVersion.version
+sourceCompatibility = JavaVersion.VERSION_17
+
+scmVersion {
+    nextVersion {
+        suffix.set("SNAPHSOT")
+        separator.set("-")
+    }
+}
+
+configurations {
+    compileOnly {
+        extendsFrom annotationProcessor
+    }
+    testCompileOnly {
+        extendsFrom testAnnotationProcessor
+    }
+}
+
+dependencies {
+    implementation 'org.springframework.boot:spring-boot-starter'
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    implementation('org.springframework.boot:spring-boot-starter-web') {
+        exclude group: 'org.springframework.boot', module: 'spring-boot-starter-tomcat'
+    }
+    implementation 'org.springframework.kafka:spring-kafka'
+    implementation 'org.springframework.boot:spring-boot-starter-json'
+    implementation "com.sportradar.livedata.igp:json-schema-validator-starter-vertex:${jsonSchemaValidatorVersion}"
+    implementation 'jakarta.validation:jakarta.validation-api'
+    implementation 'com.jayway.jsonpath:json-path'
+    implementation "com.github.ben-manes.caffeine:caffeine:${caffeineVersion}"
+
+    runtimeOnly "ch.qos.logback.contrib:logback-json-classic:${logbackJsonVersion}"
+    runtimeOnly "ch.qos.logback.contrib:logback-jackson:${logbackJsonVersion}"
+    runtimeOnly "org.codehaus.janino:janino:${janinoVersion}"
+    runtimeOnly "io.micrometer:micrometer-registry-prometheus:${prometheusVersion}"
+    runtimeOnly 'org.springframework.boot:spring-boot-starter-tomcat'
+
+    annotationProcessor 'org.projectlombok:lombok'
+    annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor'
+
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation "com.tngtech.archunit:archunit-junit5:${archUnitVersion}"
+    testImplementation "net.javacrumbs.json-unit:json-unit-assertj:${jsonUnitVersion}"
+
+    testAnnotationProcessor 'org.projectlombok:lombok'
+}
+
+test {
+    useJUnitPlatform()
+}
+
+tasks.withType(Test).configureEach {
+    finalizedBy jacocoTestReport
+    systemProperty("ELK_ENABLED", "false")
+}
+
+jacocoTestReport {
+    getExecutionData().setFrom(fileTree(buildDir).include("/jacoco/*.exec"))
+    reports {
+        xml.required = true
+    }
+}
+
+apply from: 'gradle/componentTest.gradle'
+apply from: 'gradle/buildLayeredJar.gradle'
+
+testlogger {
+    showStandardStreams true
+}
